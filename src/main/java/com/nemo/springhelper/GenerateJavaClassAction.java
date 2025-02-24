@@ -4,66 +4,113 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.nemo.springhelper.services.CodeGenerator;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class GenerateJavaClassAction extends AnAction {
 
+    public static String dirPath = "";
+    public static String packageStructure = "";
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         // Get the current project
         Project project = e.getProject();
         if (project == null) return;
-
-        // Prompt the user to enter a username
-        String username = Messages.showInputDialog(project,
-                "Enter your username:",
-                "Generate Java Class",
+        String title = "Generate Java Class";
+        packageStructure = Messages.showInputDialog(project,
+                "Enter your main package:", title,
                 Messages.getQuestionIcon());
+        dirPath = project.getBasePath() + "/src/main/java/";
+        // Prompt the user to enter a entityName
+        String entityName = Messages.showInputDialog(project, "Entity name:", title, Messages.getQuestionIcon());
 
-        if (username == null || username.isEmpty()) return;
+        String fieldsInput = Messages.showInputDialog(project,
+                "Enter fields (e.g., id:Long, name:String, age:Integer): ", title,
+                Messages.getQuestionIcon());
+        String[] fields = fieldsInput.split(",");
+        String[] fieldNames = new String[fields.length];
+        String[] fieldTypes = new String[fields.length];
 
-        // Create a new Java class with the specified username in the comment
-        createJavaClass(project, username);
+        for (int i = 0; i < fields.length; i++) {
+            String[] parts = fields[i].trim().split(":");
+            fieldNames[i] = parts[0].trim();
+            fieldTypes[i] = parts[1].trim();
+        }
+
+        CodeGenerator.generateEntityClass(entityName, fieldNames, fieldTypes);
+        CodeGenerator.generateRequestDTO(entityName, fieldNames, fieldTypes);
+        CodeGenerator.generateResponseDTO(entityName, fieldNames, fieldTypes);
+        CodeGenerator.generateRepositoryInterface(entityName);
+        CodeGenerator.generateServiceInterface(entityName);
+        CodeGenerator.generateServiceImpl(entityName);
+        CodeGenerator.generateRestController(entityName);
+
+        if (entityName == null || entityName.isEmpty()) return;
+
+        // Create a new Java class with the specified entityName in the comment
+//        createJavaClass(project, packageStructure, entityName);
     }
 
-    private void createJavaClass(Project project, String username) {
-        // Define the class name (you can customize this)
-        String className = "MyClass";
-
-        // Define the package name (you can customize this)
-        String packageName = "com.example";
-
-        // Create the class content with the username comment
+    private void createJavaClass(Project project, String packageStructure, String entityName) {
+        // Create the class content with the entityName comment
         String classContent = String.format(
-                "// Created by: %s\n\n" +
                         "package %s;\n\n" +
+                        "// Created by: %s\n"+
                         "public class %s {\n" +
                         "    // Class implementation goes here\n" +
                         "}\n",
-                username, packageName, className);
+                packageStructure, System.getProperty("user.name"), entityName);
 
-        // Get the directory where the new file will be created
-        VirtualFile baseDir = project.getBaseDir();
-        PsiDirectory directory = PsiDirectoryFactory.getInstance(project).createDirectory(baseDir);
+        // Determine the project base path
+        String projectBasePath = project.getBasePath();
+        if (projectBasePath == null) {
+            Messages.showErrorDialog(project, "Project base path not found.", "Error");
+            return;
+        }
 
-        // Create the Java file
-        PsiFile javaFile = (PsiFile) PsiFileFactory.getInstance(project)
-                .createFileFromText(className + ".java", classContent);
+        // Convert package name to directory structure and define the desired path, e.g., projectBasePath/src/com/example
+        String dirPath = projectBasePath + "/src/main/java/" + packageStructure.replace('.', '/');
+        File directory = new File(dirPath);
+        if (!directory.exists()) {
+            boolean dirsCreated = directory.mkdirs();
+            if (!dirsCreated) {
+                Messages.showErrorDialog(project, "Failed to create directories: " + dirPath, "Error");
+                return;
+            }
+        }
 
-        // Add the file to the directory
-        directory.add(javaFile);
-
-        // Reformat the file according to the project's code style
-//        CodeStyleManager.getInstance(project).optimizeImports(javaFile);
-        CodeStyleManager.getInstance(project).reformat(javaFile);
-
-        // Notify the user that the file has been created
-        Messages.showInfoMessage(project,
-                String.format("Java class '%s' created successfully!", className),
-                "Success");
+        // Create the Java file in the determined directory
+        File javaFile = new File(directory, entityName + ".java");
+        try {
+            if (javaFile.createNewFile()) {
+                // Write the generated class content to the file
+                try (FileWriter writer = new FileWriter(javaFile)) {
+                    writer.write(classContent);
+                }
+                Messages.showInfoMessage(project,
+                        "Java class '" + entityName + "' created successfully at " + javaFile.getAbsolutePath(),
+                        "Success");
+            } else {
+                // If file already exists, ask the user if they want to overwrite it
+                int response = Messages.showYesNoDialog(project,
+                        "File already exists. Do you want to overwrite it?",
+                        "File Exists",
+                        Messages.getQuestionIcon());
+                if (response == Messages.YES) {
+                    try (FileWriter writer = new FileWriter(javaFile)) {
+                        writer.write(classContent);
+                    }
+                    Messages.showInfoMessage(project,
+                            "Java class '" + entityName + "' overwritten successfully at " + javaFile.getAbsolutePath(),
+                            "Success");
+                }
+            }
+        } catch (IOException ex) {
+            Messages.showErrorDialog(project, "Error creating file: " + ex.getMessage(), "Error");
+        }
     }
 }

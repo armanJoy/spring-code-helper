@@ -30,12 +30,22 @@
 
   </extensions>
 
+<!--  <actions>-->
+<!--    <action id="com.nemo.springhelper.GenerateJavaClassAction"-->
+<!--            class="com.nemo.springhelper.GenerateJavaClassAction"-->
+<!--            text="Generate Java Class"-->
+<!--            description="Generate a Java class with a username comment">-->
+<!--      <add-to-group group-id="FileMenu" anchor="first"/>-->
+<!--    </action>-->
+<!--  </actions>-->
+
   <actions>
-    <action id="com.nemo.springhelper.GenerateJavaClassAction"
+    <action
+            id="com.nemo.springhelper.GenerateJavaClassAction"
             class="com.nemo.springhelper.GenerateJavaClassAction"
             text="Generate Java Class"
-            description="Generate a Java class with a username comment">
-      <add-to-group group-id="FileMenu" anchor="first"/>
+            description="Generate a new Java class with helper">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
   </actions>
 
