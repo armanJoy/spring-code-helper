@@ -14,14 +14,14 @@ import java.io.IOException;
 public class GenerateJavaClassAction extends AnAction {
 
     public static String dirPath = "";
-    public static String packageStructure = "";
+    public static String basePackageStructure = "";
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         // Get the current project
         Project project = e.getProject();
         if (project == null) return;
         String title = "Generate Java Class";
-        packageStructure = Messages.showInputDialog(project,
+        basePackageStructure = Messages.showInputDialog(project,
                 "Enter your main package:", title,
                 Messages.getQuestionIcon());
         dirPath = project.getBasePath() + "/src/main/java/";
