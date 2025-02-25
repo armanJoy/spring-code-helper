@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.nemo.springhelper.services.CodeGenerator;
+import com.nemo.springhelper.settings.MySettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -20,10 +21,19 @@ public class GenerateJavaClassAction extends AnAction {
         // Get the current project
         Project project = e.getProject();
         if (project == null) return;
+
+        MySettingsState settings = MySettingsState.getInstance(project);
+        if (settings == null) {
+            return; // Shouldn't happen if registered properly, but check to be safe.
+        }
+
+        // Now you can access the saved settings values (e.g., textInput1)
+        basePackageStructure = settings.textInput1;
+
         String title = "Generate Java Class";
-        basePackageStructure = Messages.showInputDialog(project,
-                "Enter your main package:", title,
-                Messages.getQuestionIcon());
+//        basePackageStructure = Messages.showInputDialog(project,
+//                "Enter your main package:", title,
+//                Messages.getQuestionIcon());
         dirPath = project.getBasePath() + "/src/main/java/";
         // Prompt the user to enter a entityName
         String entityName = Messages.showInputDialog(project, "Entity name:", title, Messages.getQuestionIcon());
@@ -46,7 +56,7 @@ public class GenerateJavaClassAction extends AnAction {
         CodeGenerator.generateResponseDTO(entityName, fieldNames, fieldTypes);
         CodeGenerator.generateRepositoryInterface(entityName);
         CodeGenerator.generateServiceInterface(entityName);
-        CodeGenerator.generateServiceImpl(entityName);
+        CodeGenerator.generateServiceImpl(entityName, fieldNames);
         CodeGenerator.generateRestController(entityName);
 
         if (entityName == null || entityName.isEmpty()) return;

@@ -5,17 +5,16 @@
 
   <!-- Public plugin name should be written in Title Case.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-  <name>spring-code-helper</name>
+  <name>Spring Code Helper</name>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-  <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="email2arjoy@gmail.com" url="https://www.arjoy.com">Spring Helper</vendor>
 
   <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Enter short description for your plugin here.<br>
-    <em>most HTML tags may be used</em>
+    Spring code helper reduce your boilerplate coding. Just specify your entity properties and your CRUD API is ready like FLASH!!<br>
   ]]></description>
 
   <!-- Product and plugin compatibility requirements.
@@ -43,10 +42,17 @@
     <action
             id="com.nemo.springhelper.GenerateJavaClassAction"
             class="com.nemo.springhelper.GenerateJavaClassAction"
-            text="Generate Java Class"
+            text="Generate CRUD"
             description="Generate a new Java class with helper">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
     </action>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.nemo.springhelper.settings.MySettingsState"/>
+    <projectConfigurable instance="com.nemo.springhelper.settings.MyPluginConfigurable" displayName="Spring Code Helper Settings" />
+<!--    <applicationService serviceImplementation="com.nemo.springhelper.settings.MySettingsState"/>-->
+<!--    <applicationConfigurable instance="com.nemo.springhelper.settings.MyPluginConfigurable" displayName="Spring Code Helper Settings" />-->
+  </extensions>
 
 </idea-plugin>
