@@ -1,21 +1,24 @@
 package com.nemo.springhelper.settings;
 
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class MySettingsPanel extends JPanel {
-//    private final Project project;
+    private final Project project;
     // UI Components for 3 text inputs
-    private TextFieldWithBrowseButton textInput1;
-    private JTextField textInput2;
+    private TextFieldWithBrowseButton baseCodeDir;
+    private TextFieldWithBrowseButton textInput2;
     private JTextField textInput3;
 
     // Dropdown (combo box)
@@ -32,7 +35,8 @@ public class MySettingsPanel extends JPanel {
     private JRadioButton radioOptionOn;
     private JRadioButton radioOptionOff;
 
-    public MySettingsPanel() {
+    public MySettingsPanel(Project project) {
+        this.project = project;
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 4, 4, 4);
@@ -41,31 +45,43 @@ public class MySettingsPanel extends JPanel {
         // Row 0 - Text Input 1
         gbc.gridx = 0;
         gbc.gridy = 0;
-        add(new JLabel("Base directory:"), gbc);
+        add(new JLabel("Set Application Main Class:"), gbc);
 
         gbc.gridx = 1;
-        textInput1 = new TextFieldWithBrowseButton(new JTextField(40));
+        baseCodeDir = new TextFieldWithBrowseButton(new JTextField(40));
         // Configure the file chooser action
-        textInput1.addActionListener(e -> {
-            FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false,false);
-            descriptor.setTitle("Select File");
+        baseCodeDir.addActionListener(e -> {
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false,
+                    false);
+            descriptor.setTitle("Set Application Main Class");
             VirtualFile[] files = FileChooserFactory.getInstance()
-                    .createFileChooser(descriptor, null, null)
-                    .choose(null);
+                    .createFileChooser(descriptor, project, null)
+                    .choose(project);
             if (files.length > 0) {
-                textInput1.setText(files[0].getPath());
+                baseCodeDir.setText(files[0].getPath());
             }
         });
 //        textInput1 = new JTextField(20);
-        add(textInput1, gbc);
+        add(baseCodeDir, gbc);
 
         // Row 1 - Text Input 2
         gbc.gridx = 0;
         gbc.gridy++;
-        add(new JLabel("Text Input 2:"), gbc);
+        add(new JLabel("Set BaseEntity Class:"), gbc);
 
         gbc.gridx = 1;
-        textInput2 = new JTextField(20);
+        textInput2 = new TextFieldWithBrowseButton(new JTextField(40));
+        textInput2.addActionListener(e -> {
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false,
+                    false);
+            descriptor.setTitle("Set BaseEntity Class");
+            VirtualFile[] files = FileChooserFactory.getInstance()
+                    .createFileChooser(descriptor, project, null)
+                    .choose(project);
+            if (files.length > 0) {
+                textInput2.setText(files[0].getPath());
+            }
+        });
         add(textInput2, gbc);
 
         // Row 2 - Text Input 3
@@ -74,7 +90,7 @@ public class MySettingsPanel extends JPanel {
         add(new JLabel("Text Input 3:"), gbc);
 
         gbc.gridx = 1;
-        textInput3 = new JTextField(20);
+        textInput3 = new JTextField(40);
         add(textInput3, gbc);
 
         // Row 3 - Dropdown Input
@@ -92,14 +108,17 @@ public class MySettingsPanel extends JPanel {
         add(new JLabel("File Path:"), gbc);
 
         gbc.gridx = 1;
-        fileChooserField = new TextFieldWithBrowseButton();
+        fileChooserField = new TextFieldWithBrowseButton(new JTextField(40));
         // Configure the file chooser action
         fileChooserField.addActionListener(e -> {
-            FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false,false);
+        //  To choose class of the project and
+//            fileChooserField.setText(chooseFullyQualifiedClassName(project));
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false,
+                    false);
             descriptor.setTitle("Select File");
             VirtualFile[] files = FileChooserFactory.getInstance()
-                    .createFileChooser(descriptor, null, null)
-                    .choose(null);
+                    .createFileChooser(descriptor, project, null)
+                    .choose(project);
             if (files.length > 0) {
                 fileChooserField.setText(files[0].getPath());
             }
@@ -135,14 +154,28 @@ public class MySettingsPanel extends JPanel {
         add(radioPanel, gbc);
     }
 
-    //--- Getters and Setters for retrieving and updating values ---
-
-    public String getTextInput1() {
-        return textInput1.getText();
+    public static String chooseFullyQualifiedClassName(Project project) {
+        // Create a class chooser that filters out inner classes if desired.
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+                .createNoInnerClassesScopeChooser(
+                        "Select Java Class",
+                        GlobalSearchScope.projectScope(project),
+                        psiClass -> true, // You can add additional filtering if needed.
+                        null
+                );
+        chooser.showDialog();
+        PsiClass selectedClass = chooser.getSelected();
+        return selectedClass != null ? selectedClass.getQualifiedName() : null;
     }
 
-    public void setTextInput1(String text) {
-        textInput1.setText(text);
+    //--- Getters and Setters for retrieving and updating values ---
+
+    public String getBaseCodeDir() {
+        return baseCodeDir.getText();
+    }
+
+    public void setBaseCodeDir(String text) {
+        baseCodeDir.setText(text);
     }
 
     public String getTextInput2() {
@@ -170,7 +203,7 @@ public class MySettingsPanel extends JPanel {
     }
 
     public String getFilePath() {
-        return fileChooserField.getText();
+        return "";
     }
 
     public void setFilePath(String path) {

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "MySettingsState", storages = @Storage("myPluginSettings.xml"))
 public class MySettingsState implements PersistentStateComponent<MySettingsState> {
     // Three text inputs
-    public String textInput1 = "";
+    public String appMainClass = "";
     public String textInput2 = "";
     public String textInput3 = "";
 

@@ -38,7 +38,7 @@ public class MyPluginConfigurable implements SearchableConfigurable {
                 project = openProjects[0]; // Choose a default or active project.
             }
         }
-        settingsPanel = new MySettingsPanel();
+        settingsPanel = new MySettingsPanel(project);
         return settingsPanel;
     }
 
@@ -46,7 +46,7 @@ public class MyPluginConfigurable implements SearchableConfigurable {
     public boolean isModified() {
         MySettingsState settings = MySettingsState.getInstance(project);
         boolean modified = false;
-        modified |= !settingsPanel.getTextInput1().equals(settings.textInput1);
+        modified |= !settingsPanel.getBaseCodeDir().equals(settings.appMainClass);
         modified |= !settingsPanel.getTextInput2().equals(settings.textInput2);
         modified |= !settingsPanel.getTextInput3().equals(settings.textInput3);
         modified |= !settingsPanel.getSelectedDropdown().equals(settings.dropdownSelection);
@@ -61,8 +61,8 @@ public class MyPluginConfigurable implements SearchableConfigurable {
     @Override
     public void apply() throws ConfigurationException {
         MySettingsState settings = MySettingsState.getInstance(project);
-        System.out.println(settingsPanel.getTextInput1());
-        settings.textInput1 = settingsPanel.getTextInput1();
+        System.out.println(settingsPanel.getBaseCodeDir());
+        settings.appMainClass = settingsPanel.getBaseCodeDir();
         settings.textInput2 = settingsPanel.getTextInput2();
         settings.textInput3 = settingsPanel.getTextInput3();
         settings.dropdownSelection = settingsPanel.getSelectedDropdown();
@@ -75,8 +75,8 @@ public class MyPluginConfigurable implements SearchableConfigurable {
     @Override
     public void reset() {
         MySettingsState settings = MySettingsState.getInstance(project);
-        System.out.println(settingsPanel.getTextInput1());
-        settingsPanel.setTextInput1(settings.textInput1);
+        System.out.println(settingsPanel.getBaseCodeDir());
+        settingsPanel.setBaseCodeDir(settings.appMainClass);
         settingsPanel.setTextInput2(settings.textInput2);
         settingsPanel.setTextInput3(settings.textInput3);
         settingsPanel.setSelectedDropdown(settings.dropdownSelection);

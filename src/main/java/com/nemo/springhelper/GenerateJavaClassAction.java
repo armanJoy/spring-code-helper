@@ -4,6 +4,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.nemo.springhelper.services.CodeGenerator;
 import com.nemo.springhelper.settings.MySettingsState;
 import org.jetbrains.annotations.NotNull;
@@ -11,11 +17,17 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class GenerateJavaClassAction extends AnAction {
 
     public static String dirPath = "";
     public static String basePackageStructure = "";
+    public static String baseEntityClass = "";
+    public static String baseEntityClassPackage = "";
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         // Get the current project
@@ -28,8 +40,15 @@ public class GenerateJavaClassAction extends AnAction {
         }
 
         // Now you can access the saved settings values (e.g., textInput1)
-        basePackageStructure = settings.textInput1;
-
+        basePackageStructure = getClassPackageName(project, settings.appMainClass);
+        PsiClass baseEntityClassObj = getPsiClassFromFilePath(project, settings.textInput2);
+        baseEntityClass = Objects.nonNull(baseEntityClassObj) ? baseEntityClassObj.getName() : "";
+        baseEntityClassPackage = Objects.nonNull(baseEntityClassObj) ? baseEntityClassObj.getQualifiedName() : "";
+        if (Stream.of(basePackageStructure, baseEntityClass).anyMatch(String::isEmpty)) {
+            Messages.showWarningDialog("Please specify application main class and BaseEntity class in " +
+                    "Settings >> Spring Code Helper Settings", "Warning");
+            return;
+        }
         String title = "Generate Java Class";
 //        basePackageStructure = Messages.showInputDialog(project,
 //                "Enter your main package:", title,
@@ -63,6 +82,47 @@ public class GenerateJavaClassAction extends AnAction {
 
         // Create a new Java class with the specified entityName in the comment
 //        createJavaClass(project, packageStructure, entityName);
+    }
+
+    public static String getClassPackageName(Project project, String fullyQualifiedName) {
+        PsiClass psiClass = getPsiClassFromFilePath(project, fullyQualifiedName);
+        if (psiClass != null) {
+            // The package is stored in the PsiJavaFile that contains the class.
+            if (psiClass.getContainingFile() instanceof PsiJavaFile) {
+                PsiJavaFile javaFile = (PsiJavaFile) psiClass.getContainingFile();
+                return javaFile.getPackageName();
+            }
+        }
+
+        return "";
+    }
+
+    public static PsiClass getPsiClassFromFilePath(Project project, String filePath) {
+        // Convert the file System path into a VirtualFile.
+        File ioFile = new File(filePath);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        if (virtualFile == null) {
+            System.err.println("VirtualFile not found for: " + filePath);
+            return null;
+        }
+
+        // Get the PSI file from the virtual file.
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (!(psiFile instanceof PsiJavaFile)) {
+            System.err.println("The file is not a Java file: " + filePath);
+            return null;
+        }
+
+        PsiJavaFile psiJavaFile = (PsiJavaFile) psiFile;
+        // Optionally, check all classes in the file (usually there's one public class).
+        PsiClass[] classes = psiJavaFile.getClasses();
+        if (classes.length == 0) {
+            System.err.println("No classes found in the file: " + filePath);
+            return null;
+        }
+
+        // Return the first class or implement additional logic if needed.
+        return classes[0];
     }
 
     private void createJavaClass(Project project, String packageStructure, String entityName) {

@@ -18,7 +18,7 @@ public class CodeGenerator {
         code.append("package " + packageStruct + ";\n\n");
         code.append(getBaseEntityImport());
         code.append(getDataTypeClassImports(String.join(",", fieldTypes)));
-        code.append("\npublic class ").append(modelName).append(" extends BaseEntity {\n");
+        code.append("\npublic class ").append(modelName).append(" extends ").append(GenerateJavaClassAction.baseEntityClass).append(" {\n");
 
         for (int i = 0; i < fieldNames.length; i++) {
             code.append("    private ").append(fieldTypes[i]).append(" ").append(fieldNames[i]).append(";\n");
@@ -477,7 +477,8 @@ public class CodeGenerator {
     }
 
     private static String getBaseEntityImport() {
-        return "import %s.model.common.BaseEntity;\n".formatted(GenerateJavaClassAction.basePackageStructure);
+        return "import %s.%s;\n".formatted(GenerateJavaClassAction.baseEntityClassPackage,
+                GenerateJavaClassAction.baseEntityClass);
     }
 
     private static String getPageDataClassImport() {
